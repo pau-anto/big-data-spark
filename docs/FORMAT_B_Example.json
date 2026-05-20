@@ -1,0 +1,21 @@
+{
+  "image_id": "tulipe_001",
+  "pixels_binary": "<binary data: 512×512×1 float32 = 1,048,576 bytes>",
+  "resized_width": 512,
+  "resized_height": 512,
+  "num_channels": 1,
+  "processing_timestamp": 1716198000000,
+  "is_grayscale": true,
+  "normalized_min": 0.0,
+  "normalized_max": 1.0,
+  "clahe_applied": true,
+  "model_name": "cnn_v1",
+  "model_version": "1.0.0",
+  "predicted_class": "tulipe",
+  "predicted_class_id": 0,
+  "confidence": 0.9742,
+  "class_probabilities": "{\"tulipe\": 0.9742, \"lys\": 0.0258}",
+  "us2_preprocessing_duration_ms": 28,
+  "us2_inference_duration_ms": 125,
+  "us2_total_duration_ms": 153
+}
