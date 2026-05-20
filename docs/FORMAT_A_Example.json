@@ -1,0 +1,8 @@
+{
+  "image_id": "tulipe_001",
+  "pixels_binary": "<binary data: 512×512×3 = 786,432 bytes of uint8 raw image pixels>",
+  "resized_width": 512,
+  "resized_height": 512,
+  "num_channels": 3,
+  "processing_timestamp": 1716198000000
+}
