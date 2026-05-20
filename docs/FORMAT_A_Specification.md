@@ -46,6 +46,12 @@ Format A contient les pixels sérialisés + métadonnées minimales pour µS2.
 
 ---
 
+## Exemple
+
+See `FORMAT_A_Example.json` for a complete example of a tulip image in Format A.
+
+--- 
+
 ## Pipeline µS1
 
 ```
