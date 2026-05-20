@@ -27,7 +27,7 @@ Format B contient l'image préprocessée + résultats ML + timings.
 
 ## Schéma Parquet
 
-**19 fields: Format A transformé + preprocessing + inference + timings**
+**18 fields: Format A transformé + preprocessing + inference + timings**
 
 | Field Name | Type | Required | Description |
 |---|---|---|---|
@@ -37,10 +37,9 @@ Format B contient l'image préprocessée + résultats ML + timings.
 | **resized_height** | IntegerType | YES | Hauteur (512) |
 | **num_channels** | IntegerType | YES | Nombre de canaux (1 = grayscale) |
 | **processing_timestamp** | LongType | YES | Timestamp µS1 (millisecondes) |
-| **is_grayscale** | BooleanType | YES | true (confirmation grayscale) |
+| **is_grayscale** | BooleanType | YES | false (grayscale application) |
 | **normalized_min** | FloatType | YES | Min value après normalisation (0.0) |
 | **normalized_max** | FloatType | YES | Max value après normalisation (1.0) |
-| **clahe_applied** | BooleanType | YES | CLAHE enhancement appliquée? (true/false) |
 | **model_name** | StringType | YES | Nom du modèle (ex: `cnn_v1`) |
 | **model_version** | StringType | YES | Version du modèle (ex: `1.0.0`) |
 | **predicted_class** | StringType | YES | Classe prédite (`tulipe` ou `lys`) |
