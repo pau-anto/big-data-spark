@@ -1,8 +1,8 @@
-# 🌷 Big Data Project - Tulipes vs Lys Classification
+# 🌷 Big Data Project - Tulips vs Lilies Classification
 
-Projet de classification d'images (tulipes/lys) utilisant une architecture microservices avec PySpark, Scala ML, et Streamlit.
+Image classification project (tulips/lilies) using a microservices architecture with PySpark, Scala ML, and Streamlit.
 
-**Status:** 🚀 En développement
+**Status:** 🚀 In Development
 
 ---
 
@@ -36,14 +36,14 @@ Input Image
 
 ---
 
-## 🛠️ Stack Technique
+## 🛠️ Technical Stack
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | µS 1 & 2 | Python + PySpark | Image loading & preprocessing |
 | µS 3 | Scala + MLlib | ML model inference |
 | UI | Streamlit | Web interface & visualization |
-| Dataset | Images | ~100 MB (tulipes/lys) |
+| Dataset | Images | ~100 MB (tulips/lilies) |
 | Version Control | Git + GitHub | Collaboration & code management |
 
 ---
@@ -51,7 +51,7 @@ Input Image
 ## 📁 Project Structure
 
 ```
-big-data-tulipes-lys/
+big-data-tulips-lilies/
 ├── microservice_1/          # Image loading & parsing
 │   ├── main.py
 │   ├── requirements.txt
@@ -90,8 +90,8 @@ big-data-tulipes-lys/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/TONNOM/big-data-tulipes-lys.git
-cd big-data-tulipes-lys
+git clone https://github.com/TONNOM/big-data-tulips-lilies.git
+cd big-data-tulips-lilies
 ```
 
 ### 2. Create Virtual Environment
@@ -156,10 +156,10 @@ The UI should open at `http://localhost:8501`
 
 | Phase | Duration | Focus |
 |-------|----------|-------|
-| **Phase 1** | W1-2 (26 May - 2 Jun) | Setup & environment |
-| **Phase 2** | W3-5 (2 Jun - 30 Jun) | µS 1 & 2 (parsing/preprocessing) |
-| **Phase 3** | W6-8 (23 Jun - 21 Jul) | ML training & µS 3 |
-| **Phase 4** | W9-10 (14 Jul - 26 Jul) | Streamlit UI & final tests |
+| **Phase 1** | W1-2 (May 26 - Jun 2) | Setup & environment |
+| **Phase 2** | W3-5 (Jun 2 - Jun 30) | µS 1 & 2 (parsing/preprocessing) |
+| **Phase 3** | W6-8 (Jun 23 - Jul 21) | ML training & µS 3 |
+| **Phase 4** | W9-10 (Jul 14 - Jul 26) | Streamlit UI & final tests |
 
 ---
 
@@ -206,15 +206,15 @@ Output: NPZ files in output_bw/
 ```json
 {
   "filename": "image_name.jpg",
-  "prediction": "tulipe",
+  "prediction": "tulip",
   "confidence": 0.95,
   "scores": {
-    "tulipe": 0.95,
-    "lys": 0.05
+    "tulip": 0.95,
+    "lily": 0.05
   }
 }
 ```
 
 ---
 
-*Projet académique — ESGI — Spark core — Juillet 2026*
+*Academic Project — ESGI — Spark core — July 2026*
