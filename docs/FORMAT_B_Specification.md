@@ -1,73 +1,51 @@
 # FORMAT B Specification
-
-**Version:** 1.0  
-**Date:** 20 mai 2026  
-**Auteur:** Pauline
-
+**Version:** 1.1
+**Date:** May 26, 2026  
+**Author:** Pauline
 ---
-
 ## Description
-
-**Format B = Sortie de µS2 (Preprocessing + Inference)**
-
-Images du Format A sont préprocessées (grayscale + normalisation) et passées au modèle ML pour prédictions.
-
-Format B contient l'image préprocessée + résultats ML + timings.
-
+**Format B = Output of µS2 (Preprocessing + Inference)**
+Images from Format A are preprocessed (grayscale + normalization) and passed to the ML model for predictions.
+Format B contains the preprocessed image + ML results + timings.
 ---
-
-## Sérialisation
-
+## Serialization
 - **Format:** Binary (Raw bytes) + ML metadata
 - **Image encoder:** `array.tobytes()` (NumPy)
 - **Compression:** Snappy (Parquet)
-- **ML metadata:** JSON strings pour class_probabilities
-
+- **ML metadata:** JSON strings for class_probabilities
 ---
-
-## Schéma Parquet
-
-**18 fields: Format A transformé + preprocessing + inference + timings**
-
+## Parquet Schema
+**18 fields: Format A transformed + preprocessing + inference + timings**
 | Field Name | Type | Required | Description |
 |---|---|---|---|
-| **image_id** | StringType | YES | Identifiant unique (ex: `tulipe_001`) |
-| **pixels_binary** | BinaryType | YES | Image préprocessée en raw bytes (512×512×1 float32 = 1,048,576 bytes) |
-| **resized_width** | IntegerType | YES | Largeur (512) |
-| **resized_height** | IntegerType | YES | Hauteur (512) |
-| **num_channels** | IntegerType | YES | Nombre de canaux (1 = grayscale) |
-| **processing_timestamp** | LongType | YES | Timestamp µS1 (millisecondes) |
-| **is_grayscale** | BooleanType | YES | false (grayscale application) |
-| **normalized_min** | FloatType | YES | Min value après normalisation (0.0) |
-| **normalized_max** | FloatType | YES | Max value après normalisation (1.0) |
-| **model_name** | StringType | YES | Nom du modèle (ex: `cnn_v1`) |
-| **model_version** | StringType | YES | Version du modèle (ex: `1.0.0`) |
-| **predicted_class** | StringType | YES | Classe prédite (`tulipe` ou `lys`) |
-| **predicted_class_id** | IntegerType | YES | ID classe (0 ou 1) |
-| **confidence** | FloatType | YES | Confiance (0.0-1.0) |
-| **class_probabilities** | StringType | YES | JSON: `{"tulipe": 0.97, "lys": 0.03}` |
-| **us2_preprocessing_duration_ms** | LongType | YES | Temps preprocessing (ms) |
-| **us2_inference_duration_ms** | LongType | YES | Temps inference (ms) |
-| **us2_total_duration_ms** | LongType | YES | Temps total µS2 (ms) |
-
+| **image_id** | StringType | YES | Unique identifier (ex: `tulip_001`) |
+| **pixels_binary** | BinaryType | YES | Preprocessed image in raw bytes (512×512×1 float32 = 1,048,576 bytes) |
+| **resized_width** | IntegerType | YES | Width (512) |
+| **resized_height** | IntegerType | YES | Height (512) |
+| **num_channels** | IntegerType | YES | Number of channels (1 = grayscale) |
+| **processing_timestamp** | LongType | YES | µS1 timestamp (milliseconds) |
+| **is_grayscale** | BooleanType | YES | true (grayscale applied) |
+| **normalized_min** | FloatType | YES | Min value after normalization (0.0) |
+| **normalized_max** | FloatType | YES | Max value after normalization (1.0) |
+| **model_name** | StringType | YES | Model name (ex: `cnn_v1`) |
+| **model_version** | StringType | YES | Model version (ex: `1.0.0`) |
+| **predicted_class** | StringType | YES | Predicted class (`tulip` or `lily`) |
+| **predicted_class_id** | IntegerType | YES | Class ID (0 or 1) |
+| **confidence** | FloatType | YES | Confidence (0.0-1.0) |
+| **class_probabilities** | StringType | YES | JSON: `{"tulip": 0.97, "lily": 0.03}` |
+| **us2_preprocessing_duration_ms** | LongType | YES | Preprocessing time (ms) |
+| **us2_inference_duration_ms** | LongType | YES | Inference time (ms) |
+| **us2_total_duration_ms** | LongType | YES | Total µS2 time (ms) |
 ---
-
-## Stockage
-
+## Storage
 - **Path:** `/data/processed/µs2_inference/`
 - **Format:** Parquet (.parquet)
 - **Compression:** snappy
-
 ---
-
-## Exemple
-
+## Example
 See `FORMAT_B_Example.json` for a complete example of a tulip image in Format B.
-
 ---
-
-## Pipeline µS2
-
+## µS2 Pipeline
 ```
 Format A (RGB uint8)
   ↓ Deserialize (bytes → array)
