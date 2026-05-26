@@ -1,6 +1,6 @@
 # FORMAT A Specification
 **Version:** 1.1
-**Date:** May 20, 2026  
+**Date:** May 26, 2026  
 **Author:** Pauline 
 
 ---
