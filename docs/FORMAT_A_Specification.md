@@ -1,58 +1,56 @@
-# FORMAT A Spécification
-**Version:** 1.0
-**Date:** 20 mai 2026  
-**Auteur:** Pauline 
+# FORMAT A Specification
+**Version:** 1.1
+**Date:** May 20, 2026  
+**Author:** Pauline 
 
 ---
 
 ## Description
-
-**Format A = Sortie de µS1 (Analyse syntaxique)**
-
-Les images originales sont chargées, redimensionnées à 512×512, et converties en binaire (raw bytes).
-Le Format A contient les pixels sérialisés + métadonnées minimales pour µS2.
+**Format A = Output of µS1 (Parsing)**
+Original images are loaded, resized to 512×512, and converted to binary (raw bytes).
+Format A contains serialized pixels + minimal metadata for µS2.
 
 ---
-## Sérialisation
-- **Format:** Binaire (Raw bytes)
-- **Encodeur:** `array.tobytes()` (NumPy)
+
+## Serialization
+- **Format:** Binary (Raw bytes)
+- **Encoder:** `array.tobytes()` (NumPy)
 - **Compression:** Snappy (Parquet)
   
 ---
 
-## Schéma Parquet
-| Nom du champ | Type | Requis | Description |
+## Parquet Schema
+| Field Name | Type | Required | Description |
 |---|---|---|---|
-| **image_id** | StringType | OUI | Identifiant unique (ex: `tulipe_001`) |
-| **pixels_binary** | BinaryType | OUI | Image en raw bytes (512×512×3 uint8 = 786 432 bytes) |
-| **resized_width** | IntegerType | OUI | Largeur après redimensionnement (512) |
-| **resized_height** | IntegerType | OUI | Hauteur après redimensionnement (512) |
-| **num_channels** | IntegerType | OUI | Nombre de canaux (3 = RGB) |
-| **processing_timestamp** | LongType | OUI | Timestamp du traitement (millisecondes) |
+| **image_id** | StringType | YES | Unique identifier (ex: `tulip_001`) |
+| **pixels_binary** | BinaryType | YES | Image in raw bytes (512×512×3 uint8 = 786,432 bytes) |
+| **resized_width** | IntegerType | YES | Width after resizing (512) |
+| **resized_height** | IntegerType | YES | Height after resizing (512) |
+| **num_channels** | IntegerType | YES | Number of channels (3 = RGB) |
+| **processing_timestamp** | LongType | YES | Processing timestamp (milliseconds) |
 
 ---
 
-## Stockage
-- **Chemin:** `/data/processed/µs1_parsed/`
+## Storage
+- **Path:** `/data/processed/µs1_parsed/`
 - **Format:** Parquet (.parquet)
 - **Compression:** snappy
   
 ---
 
-## Exemple
-
-Voir `FORMAT_A_Example.json` pour un exemple complet d'une image de tulipe au Format A.
+## Example
+See `FORMAT_A_Example.json` for a complete example of a tulip image in Format A.
 
 --- 
 
-## Pipeline µS1
+## µS1 Pipeline
 ```
-Fichier JPG
-  ↓ Chargement (cv2.imread)
-  ↓ Validation (dimensions, canaux)
-  ↓ Redimensionnement (512×512)
-  ↓ Sérialisation (array.tobytes())
-  ↓ Écriture Parquet (snappy)
+JPG File
+  ↓ Loading (cv2.imread)
+  ↓ Validation (dimensions, channels)
+  ↓ Resizing (512×512)
+  ↓ Serialization (array.tobytes())
+  ↓ Parquet Writing (snappy)
   ↓
 /data/processed/µs1_parsed/
 ```
