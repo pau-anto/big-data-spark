@@ -2,18 +2,24 @@
 **Version:** 1.1
 **Date:** May 26, 2026  
 **Author:** Pauline
+
 ---
+
 ## Description
 **Format B = Output of µS2 (Preprocessing + Inference)**
 Images from Format A are preprocessed (grayscale + normalization) and passed to the ML model for predictions.
 Format B contains the preprocessed image + ML results + timings.
+
 ---
+
 ## Serialization
 - **Format:** Binary (Raw bytes) + ML metadata
 - **Image encoder:** `array.tobytes()` (NumPy)
 - **Compression:** Snappy (Parquet)
 - **ML metadata:** JSON strings for class_probabilities
+  
 ---
+
 ## Parquet Schema
 **18 fields: Format A transformed + preprocessing + inference + timings**
 | Field Name | Type | Required | Description |
@@ -36,15 +42,21 @@ Format B contains the preprocessed image + ML results + timings.
 | **us2_preprocessing_duration_ms** | LongType | YES | Preprocessing time (ms) |
 | **us2_inference_duration_ms** | LongType | YES | Inference time (ms) |
 | **us2_total_duration_ms** | LongType | YES | Total µS2 time (ms) |
+
 ---
+
 ## Storage
 - **Path:** `/data/processed/µs2_inference/`
 - **Format:** Parquet (.parquet)
 - **Compression:** snappy
+  
 ---
+
 ## Example
 See `FORMAT_B_Example.json` for a complete example of a tulip image in Format B.
+
 ---
+
 ## µS2 Pipeline
 ```
 Format A (RGB uint8)
