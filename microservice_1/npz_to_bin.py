@@ -117,7 +117,7 @@ if __name__ == "__main__":
         
      # Afficher les premières erreurs
     if errors_list:
-        print("\n⚠️ Premiers erreurs:")
+        print("\nPremiers erreurs:")
         for path, error in errors_list[:5]:
             print(f"  ✗ {path}: {error}")
 
@@ -126,15 +126,15 @@ if __name__ == "__main__":
     print("="*60)
     print(f"✓ Conversions réussies: {success_count}")
     print(f"✗ Erreurs: {error_count}")
-    print(f"📂 Dossier source: {NPZ_INPUT_DIR}")
-    print(f"📂 Dossier destination: {BIN_OUTPUT_DIR}")
-    print(f"💾 Taille totale: {total_size / (1024*1024):.2f} MB")
+    print(f"Dossier source: {NPZ_INPUT_DIR}")
+    print(f"Dossier destination: {BIN_OUTPUT_DIR}")
+    print(f"Taille totale: {total_size / (1024*1024):.2f} MB")
     print("="*60 + "\n")
 
     if success_count > 0:
-        print(f"✅ Conversion terminée!")
+        print(f"Conversion terminée!")
         print(f"   {success_count} fichiers .bin créés dans {BIN_OUTPUT_DIR}")
     else:
-        print("❌ Aucune conversion réussie")
+        print("Aucune conversion réussie")
 
     spark.stop()
