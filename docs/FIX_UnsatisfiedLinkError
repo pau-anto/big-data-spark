@@ -1,0 +1,81 @@
+# Fix — Erreur PySpark sous Windows : `UnsatisfiedLinkError` (winutils manquant)
+
+## Symptôme
+
+Le code plante sur n'importe quel `spark.read....load(path)` qui lit des fichiers en local (ex. `binaryFile`, lecture d'images, etc.), avec une erreur de ce type :
+
+```
+Py4JJavaError: An error occurred while calling o38.load.
+: java.lang.UnsatisfiedLinkError: 'boolean org.apache.hadoop.io.nativeio.NativeIO$Windows.access0(java.lang.String, int)'
+	at org.apache.hadoop.io.nativeio.NativeIO$Windows.access0(Native Method)
+	at org.apache.hadoop.fs.FileUtil.canRead(FileUtil.java:1415)
+	at org.apache.hadoop.fs.RawLocalFileSystem.listStatus(RawLocalFileSystem.java:802)
+	...
+```
+
+## Cause
+
+Sous Windows, Hadoop a besoin d'une bibliothèque native (`winutils.exe` + `hadoop.dll`) pour faire des opérations basiques sur le système de fichiers (lister des fichiers, vérifier des permissions, etc.). Spark embarque Hadoop en interne — sans ces binaires, **tout accès au filesystem local plante**, peu importe le chemin ou le glob utilisé.
+
+⚠️ Ce n'est **pas** un problème de chemin, ni de syntaxe de `pathGlobFilter` — ces pistes peuvent sembler logiques au vu du message d'erreur tronqué dans Jupyter, mais la vraie cause est toujours celle-ci sur Windows.
+
+## Solution
+
+### 1. Télécharger les binaires
+
+Le repo de référence [`cdarlint/winutils`](https://github.com/cdarlint/winutils) ne propose les binaires que jusqu'à **Hadoop 3.3.6**. Pas de panique : cette version fonctionne très bien même avec des versions plus récentes de Hadoop côté Spark (3.4.x compris), pour ce type d'usage basique (lecture locale de fichiers).
+
+Télécharger ces deux fichiers :
+- https://github.com/cdarlint/winutils/raw/refs/heads/master/hadoop-3.3.6/bin/winutils.exe
+- https://github.com/cdarlint/winutils/raw/refs/heads/master/hadoop-3.3.6/bin/hadoop.dll
+
+### 2. Les placer dans un dossier dédié
+
+Par exemple :
+```
+C:\hadoop\bin\winutils.exe
+C:\hadoop\bin\hadoop.dll
+```
+
+### 3. Définir les variables d'environnement AVANT de créer la SparkSession
+
+Dans le script Python, tout en haut, avant tout import/init de Spark :
+
+```python
+import os
+os.environ["HADOOP_HOME"] = "C:\\hadoop"
+os.environ["PATH"] = os.environ["HADOOP_HOME"] + "\\bin;" + os.environ["PATH"]
+```
+
+### 4. Copier `hadoop.dll` dans `System32`
+
+Souvent nécessaire pour que la JVM trouve la lib native, même avec `HADOOP_HOME` bien configuré :
+```
+C:\Windows\System32\hadoop.dll
+```
+
+### 5. Redémarrer complètement le kernel Jupyter
+
+Important : redémarrer la **cellule** ne suffit pas. La JVM doit être relancée avec la variable d'environnement déjà définie — il faut donc redémarrer le kernel (pas seulement ré-exécuter le notebook).
+
+## Vérification
+
+```python
+print(os.environ.get("HADOOP_HOME"))
+spark.read.format("binaryFile").load(TRAIN_PATH).limit(1).show()
+```
+
+Si cette commande passe, le problème est résolu.
+
+## Note annexe
+
+Une fois ce fix appliqué, si une erreur de `pathGlobFilter` apparaît (ex. avec une syntaxe à accolades type `*.{jpg,jpeg,png}`), préférer un filtre `rlike` sur la colonne `path` plutôt que de compter sur `pathGlobFilter`, plus fiable sous Hadoop :
+
+```python
+raw = (
+    spark.read.format("binaryFile")
+    .option("recursiveFileLookup", "true")
+    .load(path)
+    .filter(F.col("path").rlike(r"(?i)\.(jpg|jpeg|png)$"))
+)
+```
