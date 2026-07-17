@@ -5,12 +5,14 @@ from PIL import Image
 import pandas as pd
 import numpy as np
 import joblib
+import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="Tulipes vs Lys", layout="wide")
 st.title("🌷 Classification Tulipes / Lys")
 
 PREDICTIONS_PATH = "../output/predictions/"
-IMG_SIZE = (64, 64)  # doit correspondre à TARGET_SIZE du notebook
+IMG_SIZE = (64, 64)
 
 
 @st.cache_data
@@ -32,6 +34,8 @@ except Exception as e:
     st.error(f"Impossible de lire les prédictions : {e}")
     st.stop()
 
+df["correct"] = df["true_label"] == df["predicted_label"]
+
 st.sidebar.header("Filtres")
 variants = df["variant"].unique().tolist()
 selected_variant = st.sidebar.selectbox("Variante de prétraitement", variants)
@@ -39,19 +43,108 @@ selected_variant = st.sidebar.selectbox("Variante de prétraitement", variants)
 filtered = df[df["variant"] == selected_variant]
 
 st.subheader(f"Résultats — {selected_variant}")
-accuracy = (filtered["true_label"] == filtered["predicted_label"]).mean()
-st.metric("Accuracy sur cet échantillon", f"{accuracy:.1%}")
 
+# ── KPIs ─────────────────────────────────────────────────────────────────
+n_tulipes = (filtered["true_label"] == "tulipes").sum()
+n_lys = (filtered["true_label"] == "lys").sum()
+accuracy = filtered["correct"].mean()
+
+c1, c2, c3, c4, c5 = st.columns(5)
+c1.metric("Total images", len(filtered))
+c2.metric("🌷 Tulipes (vérité)", n_tulipes)
+c3.metric("🌸 Lys (vérité)", n_lys)
+c4.metric("Accuracy", f"{accuracy:.1%}")
+c5.metric("Confiance moyenne", f"{filtered['confidence'].mean():.1%}")
+
+st.divider()
+
+# ── Comparaison des 4 variantes ─────────────────────────────────────────
+st.subheader("Comparaison des 4 variantes")
+summary = (
+    df.groupby("variant")
+    .agg(n_test=("correct", "count"), accuracy=("correct", "mean"), avg_confidence=("confidence", "mean"))
+    .reset_index()
+)
+fig_compare = px.bar(
+    summary, x="variant", y="accuracy",
+    text=[f"{a:.1%}" for a in summary["accuracy"]],
+    color="variant",
+    labels={"accuracy": "Accuracy", "variant": "Variante"},
+)
+fig_compare.update_traces(textposition="outside")
+fig_compare.update_layout(yaxis_range=[0, 1], showlegend=False)
+st.plotly_chart(fig_compare, use_container_width=True)
+
+st.divider()
+
+# ── Ligne 1 : pie chart + barres de confiance ───────────────────────────
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Répartition Tulipes / Lys (vérité terrain)")
+    fig_pie = px.pie(
+        values=[n_tulipes, n_lys],
+        names=["🌷 Tulipes", "🌸 Lys"],
+        color_discrete_sequence=["#FF6B9D", "#A78BFA"],
+        hole=0.4
+    )
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+with col2:
+    st.subheader("Confiance par image (échantillon)")
+    df_sorted = filtered.head(20).sort_values("confidence", ascending=True)
+    colors = ["#2ECC71" if c else "#E74C3C" for c in df_sorted["correct"]]
+    fig_bar = go.Figure(go.Bar(
+        x=df_sorted["confidence"],
+        y=df_sorted["image_id"],
+        orientation="h",
+        marker_color=colors,
+        text=[f"{c:.0%}" for c in df_sorted["confidence"]],
+        textposition="outside"
+    ))
+    fig_bar.add_vline(x=0.5, line_dash="dash", line_color="gray", annotation_text="Seuil 50%")
+    fig_bar.update_layout(xaxis_range=[0, 1.15], xaxis_title="Confiance", yaxis_title="Image",
+                           height=500)
+    st.plotly_chart(fig_bar, use_container_width=True)
+st.caption("🟢 Prédiction correcte · 🔴 Prédiction incorrecte")
+
+# ── Ligne 2 : scatter des probabilités ──────────────────────────────────
+st.divider()
+st.subheader("Probabilités Tulipes vs Lys")
+fig_scatter = px.scatter(
+    filtered, x="prob_lys", y="prob_tulipes",
+    color="true_label",
+    size="confidence",
+    hover_data=["image_id", "predicted_label"],
+    color_discrete_map={"lys": "#A78BFA", "tulipes": "#FF6B9D"},
+    labels={"prob_lys": "P(lys)", "prob_tulipes": "P(tulipes)"}
+)
+fig_scatter.add_shape(type="line", x0=0, y0=1, x1=1, y1=0, line=dict(dash="dash", color="gray"))
+st.plotly_chart(fig_scatter, use_container_width=True)
+
+# ── Galerie d'images ────────────────────────────────────────────────────
+st.divider()
+st.subheader("Galerie")
 st.caption(f"{len(filtered)} images au total — aperçu des 12 premières")
 cols = st.columns(4)
 for i, row in filtered.head(12).reset_index(drop=True).iterrows():
     with cols[i % 4]:
         img = bytes_to_image(row["pixels"])
         st.image(img, caption=row["image_id"], width="stretch")
-        correct = row["true_label"] == row["predicted_label"]
-        icon = "✅" if correct else "❌"
+        icon = "✅" if row["correct"] else "❌"
         st.write(f"{icon} Vrai : **{row['true_label']}**")
         st.write(f"Prédit : **{row['predicted_label']}** ({row['confidence']:.1%})")
+
+# ── Tableau détaillé ─────────────────────────────────────────────────────
+st.divider()
+st.subheader("Résultats détaillés")
+st.dataframe(
+    filtered[["image_id", "true_label", "predicted_label", "confidence", "prob_lys", "prob_tulipes", "correct"]]
+    .style
+    .format({"confidence": "{:.1%}", "prob_lys": "{:.1%}", "prob_tulipes": "{:.1%}"})
+    .apply(lambda row: ["background-color: #E5F9E5" if row["correct"] else "background-color: #FFE5E5" for _ in row], axis=1),
+    use_container_width=True
+)
 
 st.divider()
 st.header("Tester avec ta propre image")
@@ -62,7 +155,7 @@ MODEL_DIR = "../output/model/"
 def resize_to_pixels(pil_img, size=(64, 64)):
     img = pil_img.convert("RGB").resize(size, Image.LANCZOS)
     raw = img.tobytes()
-    return list(raw)  # valeurs 0-255, RGB entrelacé
+    return list(raw)
 
 
 def rgb_to_gray(pixels):
