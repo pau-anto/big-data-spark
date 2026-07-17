@@ -108,19 +108,25 @@ with col2:
     st.plotly_chart(fig_bar, use_container_width=True)
 st.caption("🟢 Prédiction correcte · 🔴 Prédiction incorrecte")
 
-# ── Ligne 2 : scatter des probabilités ──────────────────────────────────
+
+# ── Histogramme de la confiance ───────
 st.divider()
-st.subheader("Probabilités Tulipes vs Lys")
-fig_scatter = px.scatter(
-    filtered, x="prob_lys", y="prob_tulipes",
-    color="true_label",
-    size="confidence",
-    hover_data=["image_id", "predicted_label"],
-    color_discrete_map={"lys": "#A78BFA", "tulipes": "#FF6B9D"},
-    labels={"prob_lys": "P(lys)", "prob_tulipes": "P(tulipes)"}
+st.subheader("Distribution de la confiance du modèle")
+fig_conf = px.histogram(
+    filtered, x="confidence", color="correct",
+    nbins=20,
+    color_discrete_map={True: "#2ECC71", False: "#E74C3C"},
+    labels={"confidence": "Confiance de la prédiction", "correct": "Prédiction correcte"},
+    barmode="overlay",
+    opacity=0.75,
 )
-fig_scatter.add_shape(type="line", x0=0, y0=1, x1=1, y1=0, line=dict(dash="dash", color="gray"))
-st.plotly_chart(fig_scatter, use_container_width=True)
+fig_conf.add_vline(x=0.5, line_dash="dash", line_color="gray", annotation_text="Seuil 50%")
+fig_conf.update_layout(
+    xaxis_tickformat=".0%",
+    yaxis_title="Nombre d'images",
+    legend_title="Correct ?",
+)
+st.plotly_chart(fig_conf, use_container_width=True)
 
 # ── Galerie d'images ────────────────────────────────────────────────────
 st.divider()
