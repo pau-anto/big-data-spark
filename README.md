@@ -19,20 +19,20 @@ Image classification project (tulips/lilies) using a single end-to-end PySpark p
                   │      ├─ resize to 64×64, extract RGB pixels        │
                   │      └─ train_parsed_df / test_parsed_df (Spark DF)│
                   │                ↓                                  │
-                  │  [2] Preprocessing       ⏳ to do                   │
+                  │  [2] Preprocessing       ✅                   │
                   │      ├─ grayscale + normalize (0-1)                  │
                   │                ↓                                      │
-                  │  [3] Training            ⏳ to do                       │
+                  │  [3] Training            ✅                       │
                   │      └─ train ML model on train_parsed_df                │
                   │                ↓                                          │
-                  │  [4] Inference           ⏳ to do                           │
+                  │  [4] Inference           ✅                          │
                   │      └─ predict on test_parsed_df → output/predictions/      │
                   └──────────────────────────────────────────────────────────────┘
                                 ↓
-                  ┌──────────────────────────────────────────┐
-                  │         streamlit_app/app.py    ⏳ to do    │
+                  ┌─────────────────────────────────────────────┐
+                  │         streamlit_app/app.py   ✅           │
                   │  Currently: simple image uploader/viewer     │
-                  │  Target: display predictions + confidence       │
+                  │  Target: display predictions + confidence    │
                   └──────────────────────────────────────────────┘
 ```
 
@@ -45,9 +45,9 @@ Image classification project (tulips/lilies) using a single end-to-end PySpark p
 | Component | Technology | Status |
 |-----------|-----------|--------|
 | Parsing | PySpark (`binaryFile` + UDF) | ✅ Done |
-| Preprocessing (grayscale, normalize) | PySpark | ⏳ To do |
-| Training | Python (likely scikit-learn) | ⏳ To do |
-| Inference | Python | ⏳ To do |
+| Preprocessing (grayscale, normalize) | PySpark | ✅ Done |
+| Training | Python (likely scikit-learn) | ✅ Done  |
+| Inference | Python | ✅ Done  |
 | UI | Streamlit | ⏳ Basic uploader only |
 | Dataset | Images (tulips/lilies) | ✅ In `data/` |
 | Version Control | Git + GitHub | ✅ |
