@@ -1,10 +1,17 @@
+"""
+app.py — Dashboard Streamlit : Classification Tulipes / Lys
+
+"""
+
 import io
+import os
 import struct
+import subprocess
+import uuid
+
 import streamlit as st
 from PIL import Image
 import pandas as pd
-import numpy as np
-import joblib
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -12,11 +19,22 @@ st.set_page_config(page_title="Tulipes vs Lys", layout="wide")
 st.title("🌷 Classification Tulipes / Lys")
 
 PREDICTIONS_PATH = "../output/predictions/"
+SUMMARY_PATH     = "../output/summary/"
+MODEL_DIR        = "../output/model/"
+UPLOAD_TMP_DIR   = "../output/upload_tmp/"
+PREDICT_SCRIPT   = "../predict_upload.py"
 IMG_SIZE = (64, 64)
+
+os.makedirs(UPLOAD_TMP_DIR, exist_ok=True)
 
 
 @st.cache_data
 def load_predictions(path):
+    return pd.read_parquet(path)
+
+
+@st.cache_data
+def load_summary(path):
     return pd.read_parquet(path)
 
 
@@ -58,22 +76,21 @@ c5.metric("Confiance moyenne", f"{filtered['confidence'].mean():.1%}")
 
 st.divider()
 
-# ── Comparaison des 4 variantes ─────────────────────────────────────────
+# ── Comparaison des 4 variantes (agrégation calculée par Spark) ──────────
 st.subheader("Comparaison des 4 variantes")
-summary = (
-    df.groupby("variant")
-    .agg(n_test=("correct", "count"), accuracy=("correct", "mean"), avg_confidence=("confidence", "mean"))
-    .reset_index()
-)
-fig_compare = px.bar(
-    summary, x="variant", y="accuracy",
-    text=[f"{a:.1%}" for a in summary["accuracy"]],
-    color="variant",
-    labels={"accuracy": "Accuracy", "variant": "Variante"},
-)
-fig_compare.update_traces(textposition="outside")
-fig_compare.update_layout(yaxis_range=[0, 1], showlegend=False)
-st.plotly_chart(fig_compare, use_container_width=True)
+try:
+    summary = load_summary(SUMMARY_PATH)
+    fig_compare = px.bar(
+        summary, x="variant", y="accuracy",
+        text=[f"{a:.1%}" for a in summary["accuracy"]],
+        color="variant",
+        labels={"accuracy": "Accuracy", "variant": "Variante"},
+    )
+    fig_compare.update_traces(textposition="outside")
+    fig_compare.update_layout(yaxis_range=[0, 1], showlegend=False)
+    st.plotly_chart(fig_compare, use_container_width=True)
+except Exception as e:
+    st.warning(f"Résumé Spark introuvable ({e}) .")
 
 st.divider()
 
@@ -108,8 +125,7 @@ with col2:
     st.plotly_chart(fig_bar, use_container_width=True)
 st.caption("🟢 Prédiction correcte · 🔴 Prédiction incorrecte")
 
-
-# ── Histogramme de la confiance ───────
+# ── Histogramme de la confiance ─────────────────────────────────────────
 st.divider()
 st.subheader("Distribution de la confiance du modèle")
 fig_conf = px.histogram(
@@ -152,37 +168,9 @@ st.dataframe(
     use_container_width=True
 )
 
+# ── Tester avec ta propre image — tout le calcul passe par Spark ────────
 st.divider()
 st.header("Tester avec ta propre image")
-
-MODEL_DIR = "../output/model/"
-
-
-def resize_to_pixels(pil_img, size=(64, 64)):
-    img = pil_img.convert("RGB").resize(size, Image.LANCZOS)
-    raw = img.tobytes()
-    return list(raw)
-
-
-def rgb_to_gray(pixels):
-    gray = []
-    for i in range(0, len(pixels), 3):
-        r, g, b = pixels[i], pixels[i + 1], pixels[i + 2]
-        gray.append(0.299 * r + 0.587 * g + 0.114 * b)
-    return gray
-
-
-def build_features(pixels, variant):
-    if variant == "color_bytes":
-        return np.array(pixels, dtype=np.float32).reshape(1, -1)
-    if variant == "color_normalized":
-        return np.array([p / 255.0 for p in pixels], dtype=np.float32).reshape(1, -1)
-    if variant == "grayscale":
-        return np.array(rgb_to_gray(pixels), dtype=np.float32).reshape(1, -1)
-    if variant == "grayscale_normalized":
-        gray = rgb_to_gray(pixels)
-        return np.array([g / 255.0 for g in gray], dtype=np.float32).reshape(1, -1)
-
 
 variant_choice = st.selectbox(
     "Modèle à utiliser",
@@ -193,25 +181,27 @@ variant_choice = st.selectbox(
 uploaded_file = st.file_uploader("Dépose une image (tulipe ou lys)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    pil_img = Image.open(uploaded_file)
-    st.image(pil_img, caption="Image déposée", width="stretch")
+    image_bytes = uploaded_file.read()
+    st.image(image_bytes, caption="Image déposée", width="stretch")
 
-    pixels = resize_to_pixels(pil_img)
-    X = build_features(pixels, variant_choice)
+    tmp_id = uuid.uuid4().hex
+    image_path = os.path.join(UPLOAD_TMP_DIR, f"{tmp_id}.jpg")
+    output_path = os.path.join(UPLOAD_TMP_DIR, f"{tmp_id}_result.parquet")
 
-    model = joblib.load(f"{MODEL_DIR}{variant_choice}.joblib")
+    with open(image_path, "wb") as f:
+        f.write(image_bytes)
 
-    encoder_path = f"{MODEL_DIR}{variant_choice}_encoder.joblib"
-    try:
-        encoder = joblib.load(encoder_path)
-        pred_encoded = model.predict(X)
-        pred_label = encoder.inverse_transform(pred_encoded)[0]
-        proba = model.predict_proba(X)[0]
-        confidence = proba.max()
-    except FileNotFoundError:
-        pred_label = model.predict(X)[0]
-        proba = model.predict_proba(X)[0]
-        confidence = proba.max()
+    with st.spinner("Traitement Spark en cours..."):
+        result = subprocess.run(
+            ["python", PREDICT_SCRIPT, image_path, variant_choice, output_path, MODEL_DIR],
+            capture_output=True, text=True,
+        )
 
-    st.subheader(f"Prédiction : **{pred_label}**")
-    st.metric("Confiance", f"{confidence:.1%}")
+    if result.returncode != 0:
+        st.error("Erreur pendant le traitement Spark :")
+        st.code(result.stderr)
+    else:
+        pred_df = pd.read_parquet(output_path)
+        row = pred_df.iloc[0]
+        st.subheader(f"Prédiction : **{row['predicted_label']}**")
+        st.metric("Confiance", f"{row['confidence']:.1%}")
