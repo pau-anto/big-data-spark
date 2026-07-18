@@ -144,16 +144,16 @@ TARGET_SIZE  = (64, 64)
 - Extracts `image_id` and `label` (`lys` / `tulipes`) from the file path.
 - Produces `train_parsed_df` and `test_parsed_df`, two Spark DataFrames with columns `image_id`, `label`, `pixels`.
 
-### 3 · Preprocessing — ⏳ not implemented yet
+### 3 · Preprocessing — ✅
 Planned: convert to grayscale and normalize pixel values to `[0.0, 1.0]`.
 
-### 4 · Training — ⏳ not implemented yet
+### 4 · Training — ✅
 Planned: train a classifier (tulipe vs lys) on `train_parsed_df`, save it to `output/model/`.
 
-### 5 · Inference — ⏳ not implemented yet
+### 5 · Inference — ✅
 Planned: run the trained model on `test_parsed_df`, write predictions (class + confidence) to `output/predictions/` as Parquet/JSON.
 
-### 6 · Visualization — ⏳ not implemented yet
+### 6 · Visualization — ✅
 Planned: Streamlit app reads `output/predictions/` and displays images alongside predicted class and confidence.
 
 ---
